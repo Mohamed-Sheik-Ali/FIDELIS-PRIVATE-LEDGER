@@ -7,6 +7,16 @@ import React, { useState } from 'react';
 import { AuthView, User } from '../types';
 import { Mail, Lock, User as UserIcon, ArrowRight, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { auth, db } from '../services/firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  sendPasswordResetEmail, 
+  signInWithPopup, 
+  GoogleAuthProvider 
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { DEFAULT_CATEGORIES } from '../services/financeService';
 
 interface AuthContainerProps {
   onAuthenticate: (user: User) => void;
@@ -20,9 +30,12 @@ export default function AuthContainer({ onAuthenticate }: AuthContainerProps) {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorWord, setErrorWord] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    
     setErrorWord('');
     setSuccessMsg('');
 
@@ -41,18 +54,124 @@ export default function AuthContainer({ onAuthenticate }: AuthContainerProps) {
       return;
     }
 
-    if (view === 'forgot') {
-      setSuccessMsg('Reset code sent! Real email triggers require backend configuration.');
-      return;
-    }
+    setLoading(true);
 
-    // Success Authentication
-    const finalName = view === 'register' ? name : email.split('@')[0];
-    onAuthenticate({
-      email,
-      name: finalName.charAt(0).toUpperCase() + finalName.slice(1),
-      isAuthenticated: true,
-    });
+    try {
+      if (view === 'register') {
+        const credentials = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = credentials.user.uid;
+        
+        // Create user document in Firestore (as required by security rules and specifications)
+        await setDoc(doc(db, 'users', uid), {
+          email: email.trim(),
+          name: name.trim(),
+          createdAt: new Date().toISOString()
+        });
+
+        // Seed default categories into Firestore
+        for (const cat of DEFAULT_CATEGORIES) {
+          await setDoc(doc(db, `users/${uid}/categories`, cat.id), {
+            id: cat.id,
+            name: cat.name,
+            type: cat.type,
+            icon: cat.icon,
+            color: cat.color,
+            userId: uid,
+            createdAt: new Date().toISOString()
+          });
+        }
+
+        setSuccessMsg('Account created successfully! Capital vault generated.');
+        onAuthenticate({
+          email: email.trim(),
+          name: name.trim(),
+          isAuthenticated: true,
+        });
+      } else if (view === 'login') {
+        const credentials = await signInWithEmailAndPassword(auth, email, password);
+        const uid = credentials.user.uid;
+        
+        // Fetch real-time profile name from database
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        const finalName = userDoc.exists() ? userDoc.data().name : email.split('@')[0];
+
+        setSuccessMsg('Vault credentials verified. Welcome back!');
+        onAuthenticate({
+          email: email.trim(),
+          name: finalName,
+          isAuthenticated: true,
+        });
+      } else if (view === 'forgot') {
+        await sendPasswordResetEmail(auth, email);
+        setSuccessMsg('Password reset instructions dispatched to your secure email vault.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/operation-not-allowed') {
+        setErrorWord('Email/Password access is disabled. Change console toggles or access with Google.');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setErrorWord('This email address is already locked inside another secure vault.');
+      } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        setErrorWord('Invalid email/password combinations.');
+      } else {
+        setErrorWord(err.message || 'Vault verification failed.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (loading) return;
+    setErrorWord('');
+    setSuccessMsg('');
+    setLoading(true);
+    
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const userObj = result.user;
+      const uid = userObj.uid;
+      
+      const userRef = doc(db, 'users', uid);
+      const userSnap = await getDoc(userRef);
+      let finalName = userObj.displayName || userObj.email?.split('@')[0] || 'User';
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: userObj.email || '',
+          name: finalName,
+          createdAt: new Date().toISOString()
+        });
+        
+        // Seed default categories for this user
+        for (const cat of DEFAULT_CATEGORIES) {
+          await setDoc(doc(db, `users/${uid}/categories`, cat.id), {
+            id: cat.id,
+            name: cat.name,
+            type: cat.type,
+            icon: cat.icon,
+            color: cat.color,
+            userId: uid,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } else {
+        finalName = userSnap.data().name || finalName;
+      }
+
+      setSuccessMsg('Google authentication verified. Vault unlocked!');
+      onAuthenticate({
+        email: userObj.email || '',
+        name: finalName,
+        isAuthenticated: true,
+      });
+    } catch (err: any) {
+      console.error(err);
+      setErrorWord(err.message || 'Google secure authentication failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -198,22 +317,53 @@ export default function AuthContainer({ onAuthenticate }: AuthContainerProps) {
             {/* Main Submit action */}
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 cursor-pointer"
+              disabled={loading}
+              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-700/50 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-98 cursor-pointer"
             >
               <span>
-                {view === 'login' && 'Unlock Treasury'}
-                {view === 'register' && 'Generate Account'}
-                {view === 'forgot' && 'Reset Vault'}
+                {loading ? 'Processing Vault Update...' : (
+                  <>
+                    {view === 'login' && 'Unlock Treasury'}
+                    {view === 'register' && 'Generate Account'}
+                    {view === 'forgot' && 'Reset Vault'}
+                  </>
+                )}
               </span>
-              <ArrowRight size={14} />
+              {!loading && <ArrowRight size={14} />}
             </button>
+
+            {/* Google Authentication Section */}
+            {(view === 'login' || view === 'register') && (
+              <>
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-slate-100 dark:border-slate-800"></div>
+                  <span className="flex-shrink mx-4 text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">SECURE OAUTH</span>
+                  <div className="flex-grow border-t border-slate-100 dark:border-slate-800"></div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                  className="w-full py-3 px-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 disabled:bg-slate-100 dark:disabled:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl text-xs transition-all flex items-center justify-center gap-2.5 shadow-sm active:scale-98 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path
+                      fill="#EA4335"
+                      d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.414 0-6.19-2.77-6.19-6.19 0-3.42 2.777-6.19 6.19-6.19 1.458 0 2.8.502 3.868 1.343l3.05-3.048C18.995 2.51 15.827 1 12.24 1 6.042 1 1 6.042 1 12.24s5.042 11.24 11.24 11.24c5.897 0 10.87-4.14 11.59-9.715H12.24z"
+                    />
+                  </svg>
+                  <span>Authenticate with Google</span>
+                </button>
+              </>
+            )}
 
           </form>
 
-          {/* Quick Mock Bypass tip */}
-          <div className="mt-5 p-3.5 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-2xl">
-            <p className="text-[10px] text-slate-500 dark:text-slate-450 leading-relaxed text-center">
-              💡 <strong>Quick Sandbox Bypass:</strong> Tap any button to enter with clean mockup reserves instantly. Credentials can be custom set!
+          {/* Connected DB status */}
+          <div className="mt-5 p-3.5 bg-emerald-500/5 dark:bg-emerald-400/5 border border-emerald-500/10 dark:border-emerald-400/12 rounded-2xl">
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400/80 leading-relaxed text-center font-medium">
+              🔐 <strong>Database Connected (Firestore):</strong> This session is isolated and protected with zero-trust security rules and cloud ledger storage.
             </p>
           </div>
 

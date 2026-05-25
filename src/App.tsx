@@ -5,7 +5,10 @@
 
 import { useState, useEffect } from 'react';
 import { User, Transaction, Category, ViewType } from './types';
-import { financeService } from './services/financeService';
+import { DEFAULT_CATEGORIES } from './services/financeService';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { collection, onSnapshot, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { auth, db, handleFirestoreError, OperationType } from './services/firebase';
 
 // Layout / Pages / View imports
 import AuthContainer from './components/AuthContainer';
@@ -58,52 +61,143 @@ export default function App() {
     return () => clearTimeout(timer);
   };
 
-  // Initial Boot loader
+  // Track Firebase authenticated state
   useEffect(() => {
-    const activeUser = financeService.getUser();
-    setUser(activeUser);
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        let name = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
+        try {
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            name = userSnap.data().name || name;
+          }
+        } catch (e) {
+          console.error("Error fetching profile", e);
+        }
+        setUser({
+          email: firebaseUser.email || '',
+          name,
+          isAuthenticated: true,
+          uid: firebaseUser.uid
+        });
+      } else {
+        setUser(null);
+        setCategories([]);
+        setTransactions([]);
+      }
+    });
 
-    const initialCategories = financeService.getCategories();
-    const initialTransactions = financeService.getTransactions();
-    
-    setCategories(initialCategories);
-    setTransactions(initialTransactions);
+    return () => unsubscribeAuth();
   }, []);
 
-  // Sync state changes with storage APIs
-  const refreshLedger = () => {
-    setCategories(financeService.getCategories());
-    setTransactions(financeService.getTransactions());
-  };
+  // Listen to Firestore real-time collections
+  useEffect(() => {
+    if (!user || !user.uid) return;
+
+    // Real-time listener for user categories
+    const unsubscribeCategories = onSnapshot(
+      collection(db, 'users', user.uid, 'categories'),
+      (snapshot) => {
+        const catsList: Category[] = [];
+        snapshot.forEach((docSnap) => {
+          catsList.push(docSnap.data() as Category);
+        });
+        setCategories(catsList);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.GET, `users/${user?.uid}/categories`);
+      }
+    );
+
+    // Real-time listener for user transactions
+    const unsubscribeTransactions = onSnapshot(
+      collection(db, 'users', user.uid, 'transactions'),
+      (snapshot) => {
+        const txsList: Transaction[] = [];
+        snapshot.forEach((docSnap) => {
+          txsList.push(docSnap.data() as Transaction);
+        });
+        // Sort local view chronologically descending
+        txsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setTransactions(txsList);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.GET, `users/${user?.uid}/transactions`);
+      }
+    );
+
+    return () => {
+      unsubscribeCategories();
+      unsubscribeTransactions();
+    };
+  }, [user]);
 
   // Login handler
   const handleLogin = (authenticatedUser: User) => {
-    const savedUser = financeService.login(authenticatedUser.email, authenticatedUser.name);
-    setUser(savedUser);
-    refreshLedger();
-    showToast(`Successfully connected to secure cold vault! Welcome back, ${savedUser.name}.`, 'success');
+    // Note: States will be updated reactively via Auth listeners
+    showToast(`Successfully unlocked Capital Vault! Welcome, ${authenticatedUser.name}.`, 'success');
   };
 
   // Logout handler
-  const handleLogout = () => {
-    financeService.logout();
-    setUser(null);
-    setActiveTab('dashboard');
-    showToast('Secure treasury vault locked successfully.', 'info');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setActiveTab('dashboard');
+      showToast('Secure vault locked successfully. Session closed.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Secure vault de-authorization failed.', 'error');
+    }
   };
 
   // Profile Update handler
-  const handleUpdateUser = (updated: User) => {
-    localStorage.setItem('fin_user', JSON.stringify(updated));
-    setUser(updated);
-    showToast('Vault keys updated with updated preferences!', 'success');
+  const handleUpdateUser = async (updated: User) => {
+    if (!user || !user.uid) return;
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, {
+        email: updated.email,
+        name: updated.name
+      }, { merge: true });
+      showToast('Vault keys updated with updated preferences!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to sync updated preferences to cloud ledger.', 'error');
+    }
   };
 
   // Reset database showcase
-  const handleResetDatabase = () => {
-    financeService.resetState();
-    refreshLedger();
-    showToast('Database reset to baseline catalog entries.', 'info');
+  const handleResetDatabase = async () => {
+    if (!user || !user.uid) return;
+    try {
+      showToast('Resetting capital database baseline...', 'info');
+      // Delete all current transactions
+      for (const tx of transactions) {
+        await deleteDoc(doc(db, 'users', user.uid, 'transactions', tx.id));
+      }
+      // Delete all current categories
+      for (const cat of categories) {
+        await deleteDoc(doc(db, 'users', user.uid, 'categories', cat.id));
+      }
+      // Re-seed original default starting categories
+      for (const cat of DEFAULT_CATEGORIES) {
+        await setDoc(doc(db, 'users', user.uid, 'categories', cat.id), {
+          id: cat.id,
+          name: cat.name,
+          type: cat.type,
+          icon: cat.icon,
+          color: cat.color,
+          userId: user.uid,
+          createdAt: new Date().toISOString()
+        });
+      }
+      showToast('Database reset to baseline catalog entries.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to reset database baseline entries.', 'error');
+    }
   };
 
   // ==================== TRANSACTION CRUD OPERATIONS ====================
@@ -117,20 +211,41 @@ export default function App() {
     setIsTxOpen(true);
   };
 
-  const handleSaveTx = (txData: Omit<Transaction, 'id'> & { id?: string }) => {
-    const saved = financeService.saveTransaction(txData);
-    refreshLedger();
-    if (txData.id) {
-      showToast('Ledger entry updated successfully.', 'success');
-    } else {
-      showToast(`Recorded dynamic ${saved.type} of $${saved.amount.toFixed(2)} in ledger.`, 'success');
+  const handleSaveTx = async (txData: Omit<Transaction, 'id'> & { id?: string }) => {
+    if (!user || !user.uid) return;
+    try {
+      const txId = txData.id || `tx-${Date.now()}`;
+      await setDoc(doc(db, 'users', user.uid, 'transactions', txId), {
+        id: txId,
+        amount: Number(txData.amount),
+        type: txData.type,
+        categoryId: txData.categoryId,
+        note: txData.note || '',
+        date: txData.date,
+        userId: user.uid,
+        createdAt: new Date().toISOString()
+      });
+
+      if (txData.id) {
+        showToast('Ledger entry updated successfully.', 'success');
+      } else {
+        showToast(`Recorded dynamic ${txData.type} of $${Number(txData.amount).toFixed(2)} in ledger.`, 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Permission denied. Cannot write transaction.', 'error');
     }
   };
 
-  const handleDeleteTx = (id: string) => {
-    financeService.deleteTransaction(id);
-    refreshLedger();
-    showToast('Ledger entry deleted permanently.', 'info');
+  const handleDeleteTx = async (id: string) => {
+    if (!user || !user.uid) return;
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
+      showToast('Ledger entry deleted permanently.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to delete transaction entry.', 'error');
+    }
   };
 
   // ==================== CATEGORY CRUD OPERATIONS ====================
@@ -144,24 +259,46 @@ export default function App() {
     setIsCatOpen(true);
   };
 
-  const handleSaveCat = (catData: Omit<Category, 'id'> & { id?: string }) => {
-    financeService.saveCategory(catData);
-    refreshLedger();
-    showToast(`Category "${catData.name}" created and styled successfully.`, 'success');
+  const handleSaveCat = async (catData: Omit<Category, 'id'> & { id?: string }) => {
+    if (!user || !user.uid) return;
+    try {
+      const catId = catData.id || `cat-${Date.now()}`;
+      await setDoc(doc(db, 'users', user.uid, 'categories', catId), {
+        id: catId,
+        name: catData.name,
+        type: catData.type,
+        icon: catData.icon,
+        color: catData.color,
+        userId: user.uid,
+        createdAt: new Date().toISOString()
+      });
+      showToast(`Category "${catData.name}" created and styled successfully.`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to save category information.', 'error');
+    }
   };
 
-  const handleDeleteCat = (id: string) => {
+  const handleDeleteCat = async (id: string) => {
+    if (!user || !user.uid) return;
     setCatDeleteError(null);
     const cat = categories.find((c) => c.id === id);
     if (!cat) return;
 
-    const successful = financeService.deleteCategory(id);
-    if (successful) {
-      refreshLedger();
-      showToast(`Category "${cat.name}" removed securely.`, 'info');
-    } else {
+    // Lock condition checking (categories that contain active log entries cannot be deleted)
+    const isInUse = transactions.some((t) => t.categoryId === id);
+    if (isInUse) {
       setCatDeleteError(`Category "${cat.name}" is locked. There are existing transactions linked to it in your ledger.`);
       showToast('Deactivation rejected. Inspect locked warning blocks.', 'error');
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'categories', id));
+      showToast(`Category "${cat.name}" removed securely.`, 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to delete category.', 'error');
     }
   };
 

@@ -26,6 +26,7 @@ export interface User {
   email: string;
   name: string;
   isAuthenticated: boolean;
+  uid?: string;
 }
 
 export type ViewType = 'dashboard' | 'transactions' | 'categories' | 'profile' | 'settings';

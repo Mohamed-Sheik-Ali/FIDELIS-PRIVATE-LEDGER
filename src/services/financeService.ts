@@ -6,7 +6,7 @@
 import { Category, Transaction, User } from '../types';
 
 // Standard mockup Categories
-const DEFAULT_CATEGORIES: Category[] = [
+export const DEFAULT_CATEGORIES: Category[] = [
   // Income Categories
   { id: 'cat-inc-1', name: 'Salary', type: 'income', icon: 'Briefcase', color: 'emerald' },
   { id: 'cat-inc-2', name: 'Freelance', type: 'income', icon: 'Laptop', color: 'teal' },

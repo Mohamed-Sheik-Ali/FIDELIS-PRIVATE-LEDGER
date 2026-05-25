@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net - Default Deny Everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reuseable primitives and checks
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Profile schema verification helper
+    function isValidUser(data, uid) {
+      return data.keys().hasAll(['email', 'name', 'createdAt'])
+        && data.keys().size() == 3
+        && data.email is string && data.email.size() <= 200
+        && data.name is string && data.name.size() <= 100
+        && (data.createdAt is string || data.createdAt is timestamp);
+    }
+
+    // Category schema verification helper
+    function isValidCategory(data, uid) {
+      return data.keys().hasAll(['id', 'name', 'type', 'icon', 'color', 'userId', 'createdAt'])
+        && data.keys().size() == 7
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 50
+        && data.type is string && (data.type == 'income' || data.type == 'expense')
+        && data.icon is string && data.icon.size() <= 100
+        && data.color is string && data.color.size() <= 100
+        && data.userId == uid;
+    }
+
+    // Transaction schema verification helper
+    function isValidTransaction(data, uid) {
+      return data.keys().hasAll(['id', 'amount', 'type', 'categoryId', 'note', 'date', 'userId', 'createdAt'])
+        && data.keys().size() == 8
+        && data.id is string && data.id.size() <= 128
+        && data.amount is number && data.amount >= 0
+        && data.type is string && (data.type == 'income' || data.type == 'expense')
+        && data.categoryId is string && data.categoryId.size() <= 128
+        && data.note is string && data.note.size() <= 500
+        && data.date is string && data.date.size() <= 50
+        && data.userId == uid;
+    }
+
+    // Users resource definitions
+    match /users/{userId} {
+      allow read, get: if isSignedIn() && userId == request.auth.uid;
+      allow create: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming(), userId);
+      allow update: if isSignedIn() && userId == request.auth.uid && isValidUser(incoming(), userId) && incoming().createdAt == existing().createdAt;
+      allow delete: if false;
+
+      // User categories sub-collection
+      match /categories/{categoryId} {
+        allow read, get, list: if isSignedIn() && userId == request.auth.uid;
+        allow create: if isSignedIn() && userId == request.auth.uid && isValidId(categoryId) && isValidCategory(incoming(), userId);
+        allow update: if isSignedIn() && userId == request.auth.uid && isValidId(categoryId) && isValidCategory(incoming(), userId) && incoming().createdAt == existing().createdAt;
+        allow delete: if isSignedIn() && userId == request.auth.uid && isValidId(categoryId);
+      }
+
+      // User transactions sub-collection
+      match /transactions/{transactionId} {
+        allow read, get, list: if isSignedIn() && userId == request.auth.uid;
+        allow create: if isSignedIn() && userId == request.auth.uid && isValidId(transactionId) && isValidTransaction(incoming(), userId);
+        allow update: if isSignedIn() && userId == request.auth.uid && isValidId(transactionId) && isValidTransaction(incoming(), userId) && incoming().createdAt == existing().createdAt;
+        allow delete: if isSignedIn() && userId == request.auth.uid && isValidId(transactionId);
+      }
+    }
+  }
+}
