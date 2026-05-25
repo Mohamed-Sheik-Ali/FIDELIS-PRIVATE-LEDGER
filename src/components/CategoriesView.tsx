@@ -84,7 +84,7 @@ export default function CategoriesView({
       )}
 
       {/* Segmented control view switch */}
-      <div className="flex p-1.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl max-w-sm">
+      <div className="flex p-1.5 bg-slate-900 border border-slate-800 rounded-2xl max-w-sm">
         <button
           onClick={() => setActiveTab('expense')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl capitalize transition-all cursor-pointer ${
@@ -111,12 +111,12 @@ export default function CategoriesView({
 
       {/* Categories Bento Grid */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center p-12 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-xs">
-          <span className="p-4 bg-slate-50 dark:bg-slate-850 rounded-full text-slate-400 dark:text-slate-500 mb-3">
+        <div className="flex flex-col items-center justify-center text-center p-12 bg-slate-900 border border-slate-800 rounded-3xl shadow-xs">
+          <span className="p-4 bg-slate-850 rounded-full text-slate-400 mb-3">
             <Tag size={24} />
           </span>
-          <h3 className="text-base font-semibold text-slate-805 dark:text-slate-200">No custom tags in this tab</h3>
-          <p className="text-xs text-slate-450 dark:text-slate-550 max-w-sm mt-1">Add custom labels corresponding to your allocation streams to categorize incoming payouts or outgoing expenses.</p>
+          <h3 className="text-base font-semibold text-white">No custom tags in this tab</h3>
+          <p className="text-xs text-slate-400 mt-1">Add custom labels corresponding to your allocation streams to categorize incoming payouts or outgoing expenses.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -125,7 +125,7 @@ export default function CategoriesView({
             return (
               <div
                 key={cat.id}
-                className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-3xl hover:shadow-md transition-all flex flex-col justify-between"
+                className="group relative bg-slate-900 border border-slate-800 p-5 rounded-3xl hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3.5">
@@ -148,14 +148,14 @@ export default function CategoriesView({
                     <button
                       onClick={() => onEditCategory(cat)}
                       title="Edit Category Details"
-                      className="p-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-755 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-emerald-400 rounded-lg transition-colors cursor-pointer"
                     >
                       <Edit2 size={12} />
                     </button>
                     <button
                       onClick={() => onDeleteCategory(cat.id)}
                       title="Delete Category"
-                      className="p-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-755 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-450 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -163,16 +163,16 @@ export default function CategoriesView({
                 </div>
 
                 {/* Micro Stats Metrics */}
-                <div className="mt-6 pt-4 border-t border-slate-50 dark:border-slate-800/80 grid grid-cols-2 gap-2 text-xs">
+                <div className="mt-6 pt-4 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Entries linked</p>
-                    <p className="text-sm font-black text-slate-850 dark:text-slate-200 mt-0.5">
+                    <p className="text-sm font-black text-slate-205 mt-0.5">
                       {stats.count === 0 ? 'None' : `${stats.count} transaction${stats.count > 1 ? 's' : ''}`}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Total Amount</p>
-                    <p className="text-sm font-black text-slate-850 dark:text-slate-205 mt-0.5">
+                    <p className="text-sm font-black text-slate-300 mt-0.5">
                       ${stats.amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </p>
                   </div>

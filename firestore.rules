@@ -27,7 +27,7 @@ service cloud.firestore {
     // Profile schema verification helper
     function isValidUser(data, uid) {
       return data.keys().hasAll(['email', 'name', 'createdAt'])
-        && data.keys().size() == 3
+        && data.keys().size() >= 3 && data.keys().size() <= 6
         && data.email is string && data.email.size() <= 200
         && data.name is string && data.name.size() <= 100
         && (data.createdAt is string || data.createdAt is timestamp);
@@ -48,7 +48,7 @@ service cloud.firestore {
     // Transaction schema verification helper
     function isValidTransaction(data, uid) {
       return data.keys().hasAll(['id', 'amount', 'type', 'categoryId', 'note', 'date', 'userId', 'createdAt'])
-        && data.keys().size() == 8
+        && data.keys().size() >= 8 && data.keys().size() <= 10
         && data.id is string && data.id.size() <= 128
         && data.amount is number && data.amount >= 0
         && data.type is string && (data.type == 'income' || data.type == 'expense')
@@ -79,6 +79,13 @@ service cloud.firestore {
         allow create: if isSignedIn() && userId == request.auth.uid && isValidId(transactionId) && isValidTransaction(incoming(), userId);
         allow update: if isSignedIn() && userId == request.auth.uid && isValidId(transactionId) && isValidTransaction(incoming(), userId) && incoming().createdAt == existing().createdAt;
         allow delete: if isSignedIn() && userId == request.auth.uid && isValidId(transactionId);
+      }
+
+      // User trips sub-collection
+      match /trips/{tripId} {
+        allow read, get, list: if isSignedIn() && userId == request.auth.uid;
+        allow create, update: if isSignedIn() && userId == request.auth.uid && isValidId(tripId);
+        allow delete: if isSignedIn() && userId == request.auth.uid && isValidId(tripId);
       }
     }
   }

@@ -66,7 +66,7 @@ export default function SettingsView({
         <div className="lg:col-span-2 space-y-6">
           
           {/* PROFILE CONTROL */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 md:p-7 shadow-xs">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-7 shadow-xs">
             <h3 className="text-base font-display font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <UserIcon size={18} className="text-emerald-500" />
               <span>Personal Identity Profile</span>
@@ -84,7 +84,7 @@ export default function SettingsView({
                   <input
                     type="text"
                     required
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-xs font-semibold text-slate-900 dark:text-white focus:border-emerald-500 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl outline-none text-xs font-semibold text-white focus:border-emerald-500 transition-all"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -96,7 +96,7 @@ export default function SettingsView({
                   <input
                     type="email"
                     required
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-xs font-semibold text-slate-900 dark:text-white focus:border-emerald-500 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl outline-none text-xs font-semibold text-white focus:border-emerald-500 transition-all"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -124,7 +124,7 @@ export default function SettingsView({
           </div>
 
           {/* SECURITY & DELEGATION CONTROLS */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 md:p-7 shadow-xs">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-7 shadow-xs">
             <h3 className="text-base font-display font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Shield size={18} className="text-indigo-500" />
               <span>Security Protocols</span>
@@ -196,7 +196,7 @@ export default function SettingsView({
           </div>
 
           {/* SYSTEM SANDBOX RECOVERY ACTIONS */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xs space-y-4">
             <div>
               <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                 Reset system data
@@ -229,7 +229,7 @@ export default function SettingsView({
             ) : (
               <button
                 onClick={() => setResetWarn(true)}
-                className="w-full py-2.5 bg-slate-50 hover:bg-rose-50 hover:text-rose-600 text-slate-600 dark:bg-slate-800 dark:hover:bg-rose-950/20 dark:text-slate-300 dark:hover:text-rose-400 font-semibold text-xs border border-slate-200 dark:border-slate-700 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 bg-slate-800 hover:bg-rose-950/35 hover:text-rose-400 text-slate-300 font-semibold text-xs border border-slate-700 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <RefreshCw size={14} />
                 <span>Reset Sandbox Database</span>
@@ -238,7 +238,7 @@ export default function SettingsView({
 
             <button
               onClick={onLogout}
-              className="w-full py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-xs border border-slate-200 dark:border-slate-700 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 bg-slate-800 hover:bg-slate-755 text-slate-300 font-semibold text-xs border border-slate-700 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <LogOut size={14} className="text-slate-400" />
               <span>Lock Treasury Vault</span>

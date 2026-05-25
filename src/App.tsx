@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { User, Transaction, Category, ViewType } from './types';
+import { User, Transaction, Category, ViewType, Trip, TripExpense } from './types';
 import { DEFAULT_CATEGORIES } from './services/financeService';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, onSnapshot, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
@@ -16,6 +16,8 @@ import DashboardView from './components/DashboardView';
 import TransactionsView from './components/TransactionsView';
 import CategoriesView from './components/CategoriesView';
 import SettingsView from './components/SettingsView';
+import CurrencyView from './components/CurrencyView';
+import TripsView from './components/TripsView';
 
 // Overlay Components
 import TransactionModal from './components/TransactionModal';
@@ -24,7 +26,7 @@ import ThemeToggle from './components/ThemeToggle';
 import LucideIcon from './components/LucideIcon';
 
 // Standard Lucide icons supporting structural navigation
-import { LayoutDashboard, Compass, Settings, LogOut, Bell, Plus, Check, Info, AlertTriangle, Menu, X, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { LayoutDashboard, Compass, Settings, LogOut, Bell, Plus, Check, Info, AlertTriangle, Menu, X, ArrowUpRight, ArrowDownLeft, Plane, Coins } from 'lucide-react';
 
 export default function App() {
   // Authentication & Session state
@@ -33,6 +35,7 @@ export default function App() {
   // Database Ledger states
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
 
   // Navigation tab states
   const [activeTab, setActiveTab] = useState<ViewType>('dashboard');
@@ -61,16 +64,25 @@ export default function App() {
     return () => clearTimeout(timer);
   };
 
+  // Enforce dark mode on mount
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.add('dark');
+    localStorage.setItem('fin_theme', 'dark');
+  }, []);
+
   // Track Firebase authenticated state
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const userRef = doc(db, 'users', firebaseUser.uid);
         let name = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
+        let bCurr = 'USD';
         try {
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
             name = userSnap.data().name || name;
+            bCurr = userSnap.data().baseCurrency || 'USD';
           }
         } catch (e) {
           console.error("Error fetching profile", e);
@@ -79,12 +91,14 @@ export default function App() {
           email: firebaseUser.email || '',
           name,
           isAuthenticated: true,
-          uid: firebaseUser.uid
+          uid: firebaseUser.uid,
+          baseCurrency: bCurr
         });
       } else {
         setUser(null);
         setCategories([]);
         setTransactions([]);
+        setTrips([]);
       }
     });
 
@@ -127,9 +141,25 @@ export default function App() {
       }
     );
 
+    // Real-time listener for user trips
+    const unsubscribeTrips = onSnapshot(
+      collection(db, 'users', user.uid, 'trips'),
+      (snapshot) => {
+        const tripsList: Trip[] = [];
+        snapshot.forEach((docSnap) => {
+          tripsList.push(docSnap.data() as Trip);
+        });
+        setTrips(tripsList);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.GET, `users/${user?.uid}/trips`);
+      }
+    );
+
     return () => {
       unsubscribeCategories();
       unsubscribeTransactions();
+      unsubscribeTrips();
     };
   }, [user]);
 
@@ -211,7 +241,7 @@ export default function App() {
     setIsTxOpen(true);
   };
 
-  const handleSaveTx = async (txData: Omit<Transaction, 'id'> & { id?: string }) => {
+  const handleSaveTx = async (txData: Omit<Transaction, 'id'> & { id?: string; currency?: string }) => {
     if (!user || !user.uid) return;
     try {
       const txId = txData.id || `tx-${Date.now()}`;
@@ -223,7 +253,8 @@ export default function App() {
         note: txData.note || '',
         date: txData.date,
         userId: user.uid,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        currency: txData.currency || user.baseCurrency || 'USD'
       });
 
       if (txData.id) {
@@ -302,6 +333,82 @@ export default function App() {
     }
   };
 
+  // ==================== BASE CURRENCY OPERATIONS ====================
+  const handleUpdateBaseCurrency = async (newBase: string) => {
+    if (!user || !user.uid) return;
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, {
+        baseCurrency: newBase
+      }, { merge: true });
+
+      setUser(prev => prev ? { ...prev, baseCurrency: newBase } : null);
+      showToast(`Base portfolio currency migrated to ${newBase} successfully!`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Could not register base currency change.', 'error');
+    }
+  };
+
+  // ==================== TRIP PLANNER CRUD OPERATIONS ====================
+  const handleSaveTrip = async (tripInput: Omit<Trip, 'id'> & { id?: string }) => {
+    if (!user || !user.uid) return;
+    try {
+      const tripId = tripInput.id || `trip-${Date.now()}`;
+      const tripRef = doc(db, 'users', user.uid, 'trips', tripId);
+      const tripToSave: Trip = {
+        ...tripInput,
+        id: tripId,
+        userId: user.uid,
+        expenses: tripInput.expenses || [],
+      };
+      await setDoc(tripRef, tripToSave);
+      showToast(tripInput.id ? 'Trip configuration updated.' : 'Adventure draft registered successfully!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Could not register trip blueprint.', 'error');
+    }
+  };
+
+  const handleDeleteTrip = async (tripId: string) => {
+    if (!user || !user.uid) return;
+    try {
+      const tripRef = doc(db, 'users', user.uid, 'trips', tripId);
+      await deleteDoc(tripRef);
+      showToast('Adventure blueprint archived successfully.', 'info');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to archive adventure blueprint.', 'error');
+    }
+  };
+
+  const handlePostTripToLedger = async (expense: TripExpense, trip: Trip) => {
+    if (!user || !user.uid) return;
+    try {
+      const categoryId = expense.categoryId || categories[0]?.id || 'cat-exp-1';
+      const txId = `tx-${Date.now()}`;
+      const txRef = doc(db, 'users', user.uid, 'transactions', txId);
+
+      const txToSave = {
+        id: txId,
+        amount: expense.amount,
+        type: 'expense',
+        categoryId,
+        note: `[${trip.destination}] ${expense.name}`,
+        date: new Date().toISOString().split('T')[0],
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+        currency: expense.currency || 'USD',
+      };
+
+      await setDoc(txRef, txToSave);
+      showToast(`Successfully posted "${expense.name}" as live private transaction!`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Could not post planned expense to ledger.', 'error');
+    }
+  };
+
   // If user is not logged in, render the Auth split-screen
   if (!user || !user.isAuthenticated) {
     return <AuthContainer onAuthenticate={handleLogin} />;
@@ -339,9 +446,12 @@ export default function App() {
         <div className="space-y-8">
           {/* Logo Identity */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-display font-black text-xl shadow-lg shadow-emerald-500/15">
-              F
-            </div>
+            <img
+              src="/src/assets/images/fidelis_logo_1779728166630.png"
+              alt="FIDELIS Logo"
+              referrerPolicy="no-referrer"
+              className="w-10 h-10 rounded-xl object-cover border border-emerald-500/20 shadow-lg shadow-emerald-500/5"
+            />
             <div>
               <p className="font-display font-bold text-slate-905 dark:text-white leading-tight">
                 FIDELIS
@@ -357,6 +467,8 @@ export default function App() {
             {[
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'transactions', label: 'Transactions', icon: Compass },
+              { id: 'trips', label: 'Trip Planner', icon: Plane },
+              { id: 'currency', label: 'Currencies', icon: Coins },
               { id: 'categories', label: 'Categories', icon: LucideIcon, special: 'Tag' },
               { id: 'settings', label: 'Settings', icon: Settings },
             ].map((tab) => {
@@ -372,8 +484,8 @@ export default function App() {
                   }}
                   className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-emerald-50 text-emerald-700 dark:bg-slate-800 dark:text-emerald-405 font-bold shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50/70 dark:hover:bg-slate-850/40'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-slate-800 dark:text-emerald-400 font-bold shadow-xs'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50/70 dark:text-slate-400 dark:hover:text-white'
                   }`}
                 >
                   <IconComp className={isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} />
@@ -417,9 +529,12 @@ export default function App() {
       {/* MOBILE HEADER (Upper bar with navigation menu trigger) */}
       <header className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-4 sticky top-0 z-30 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-display font-black text-lg">
-            F
-          </div>
+          <img
+            src="/src/assets/images/fidelis_logo_1779728166630.png"
+            alt="FIDELIS Logo"
+            referrerPolicy="no-referrer"
+            className="w-8 h-8 rounded-lg object-cover border border-emerald-500/20"
+          />
           <span className="font-display font-bold text-slate-900 dark:text-white text-base tracking-tight leading-none">
             FIDELIS
           </span>
@@ -445,6 +560,8 @@ export default function App() {
             {[
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'transactions', label: 'Transactions', icon: Compass },
+              { id: 'trips', label: 'Trip Planner', icon: Plane },
+              { id: 'currency', label: 'Currencies', icon: Coins },
               { id: 'categories', label: 'Categories', icon: LucideIcon, special: 'Tag' },
               { id: 'settings', label: 'Settings', icon: Settings },
             ].map((tab) => {
@@ -521,6 +638,7 @@ export default function App() {
             onNavigate={setActiveTab}
             onOpenQuickAdd={handleOpenAddTx}
             userName={user.name}
+            baseCurrency={user.baseCurrency || 'USD'}
           />
         )}
 
@@ -531,6 +649,26 @@ export default function App() {
             onEditTransaction={handleOpenEditTx}
             onDeleteTransaction={handleDeleteTx}
             onOpenQuickAdd={handleOpenAddTx}
+            baseCurrency={user.baseCurrency || 'USD'}
+          />
+        )}
+
+        {activeTab === 'trips' && (
+          <TripsView
+            trips={trips}
+            categories={categories}
+            transactions={transactions}
+            user={user}
+            onSaveTrip={handleSaveTrip}
+            onDeleteTrip={handleDeleteTrip}
+            onPostTripToLedger={handlePostTripToLedger}
+          />
+        )}
+
+        {activeTab === 'currency' && (
+          <CurrencyView
+            user={user}
+            onUpdateBaseCurrency={handleUpdateBaseCurrency}
           />
         )}
 

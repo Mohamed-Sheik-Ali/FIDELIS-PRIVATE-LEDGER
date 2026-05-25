@@ -94,7 +94,7 @@ export default function CategoryModal({
       />
       
       {/* Container */}
-      <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl p-6 md:p-8">
+      <div className="relative w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 md:p-8">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -132,7 +132,7 @@ export default function CategoryModal({
               required
               maxLength={20}
               placeholder="e.g. Gym, Subscriptions, Side-hustle"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-950/50 rounded-2xl outline-none text-slate-900 dark:text-white transition-all text-sm font-medium"
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-2xl outline-none text-white transition-all text-sm font-medium"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -143,7 +143,7 @@ export default function CategoryModal({
             <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
               Allocation Type
             </label>
-            <div className="flex p-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+            <div className="flex p-1 bg-slate-950 border border-slate-800 rounded-2xl">
               <button
                 type="button"
                 className={`flex-1 py-2 text-sm font-semibold rounded-xl transition-all ${
@@ -174,7 +174,7 @@ export default function CategoryModal({
             <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
               Launcher Icon
             </label>
-            <div className="grid grid-cols-8 gap-2 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-800 rounded-2xl max-h-32 overflow-y-auto">
+            <div className="grid grid-cols-8 gap-2 p-3 bg-slate-950 border border-slate-800 rounded-2xl max-h-32 overflow-y-auto">
               {AVAILABLE_ICONS.map((ico) => (
                 <button
                   key={ico}
@@ -198,7 +198,7 @@ export default function CategoryModal({
             <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
               Color Accent Badge
             </label>
-            <div className="grid grid-cols-6 gap-2.5 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-150 dark:border-slate-800 rounded-2xl">
+            <div className="grid grid-cols-6 gap-2.5 p-3 bg-slate-950 border border-slate-805 rounded-2xl">
               {AVAILABLE_COLORS.map((col) => (
                 <button
                   key={col.name}
@@ -231,7 +231,7 @@ export default function CategoryModal({
           <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
-              className="flex-1 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 transition-all"
+              className="flex-1 py-3 text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700/50 transition-all"
               onClick={onClose}
             >
               Cancel

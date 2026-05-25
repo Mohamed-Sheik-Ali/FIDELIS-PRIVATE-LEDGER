@@ -183,9 +183,12 @@ export default function AuthContainer({ onAuthenticate }: AuthContainerProps) {
         {/* Top Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-display font-extrabold text-xl shadow-lg shadow-emerald-500/20">
-              F
-            </div>
+            <img
+              src="/src/assets/images/fidelis_logo_1779728166630.png"
+              alt="FIDELIS Logo"
+              referrerPolicy="no-referrer"
+              className="w-10 h-10 rounded-xl object-cover border border-emerald-500/20 shadow-lg shadow-emerald-500/5"
+            />
             <div>
               <span className="font-display font-black text-slate-900 dark:text-white leading-tight block">
                 FIDELIS
