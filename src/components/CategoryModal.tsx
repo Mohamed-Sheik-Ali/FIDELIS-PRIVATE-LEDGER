@@ -86,15 +86,17 @@ export default function CategoryModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 bg-slate-900/65 dark:bg-black/85 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
       
-      {/* Container */}
-      <div className="relative w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 md:p-8">
+      {/* Container wrapper to center content and add top/bottom spacing */}
+      <div className="flex min-h-screen items-center justify-center p-4 sm:p-6 md:p-10 text-center">
+        {/* Container */}
+        <div className="relative w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 md:p-8 text-left animate-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -246,5 +248,6 @@ export default function CategoryModal({
         </form>
       </div>
     </div>
+  </div>
   );
 }

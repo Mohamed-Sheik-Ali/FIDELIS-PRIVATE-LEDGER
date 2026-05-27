@@ -8,6 +8,7 @@ import { Transaction, Category, TransactionType } from '../types';
 import LucideIcon from './LucideIcon';
 import { convertCurrency, formatCurrencyValue } from '../services/currencyService';
 import { Search, Calendar, Edit, Trash2, ChevronLeft, ChevronRight, Info, Plus } from 'lucide-react';
+import { useLanguage } from '../services/languageService';
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -26,6 +27,7 @@ export default function TransactionsView({
   onOpenQuickAdd,
   baseCurrency = 'USD',
 }: TransactionsViewProps) {
+  const { t } = useLanguage();
   // Filters State
   const [search, setSearch] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<'all' | TransactionType>('all');
@@ -139,10 +141,10 @@ export default function TransactionsView({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">
-            Transactions Ledger
+            {t('transactionsLedger')}
           </h1>
           <p className="text-sm text-slate-550 dark:text-slate-400">
-            Audit, filter, and track all inflow and outflow entries in original currency or base portfolio equivalent.
+            {t('financialOverviewDescription')}
           </p>
         </div>
         <button
@@ -151,7 +153,7 @@ export default function TransactionsView({
           className="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-2xl shadow-md cursor-pointer text-sm"
         >
           <Plus size={16} />
-          <span>Quick Record</span>
+          <span>{t('quickRecord')}</span>
         </button>
       </div>
 
@@ -169,7 +171,7 @@ export default function TransactionsView({
             <input
               type="text"
               className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:border-emerald-500 rounded-2xl outline-none text-xs font-semibold focus:ring-1 focus:ring-emerald-500/20"
-              placeholder="Search note memos or categories..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -188,9 +190,9 @@ export default function TransactionsView({
                 setPage(1);
               }}
             >
-              <option value="all" className="bg-slate-900 text-slate-300">Financial Flow: All</option>
-              <option value="income" className="bg-slate-900 text-slate-300">Inflow Only</option>
-              <option value="expense" className="bg-slate-900 text-slate-300">Outflow Only</option>
+              <option value="all" className="bg-slate-900 text-slate-300">{t('financialFlowAll')}</option>
+              <option value="income" className="bg-slate-900 text-slate-300">{t('financialFlowIncome')}</option>
+              <option value="expense" className="bg-slate-900 text-slate-300">{t('financialFlowExpense')}</option>
             </select>
           </div>
         </div>
@@ -198,7 +200,7 @@ export default function TransactionsView({
         {/* Categories, Period, and Sorting row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Category Tag</label>
+            <label className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">{t('categoryTag')}</label>
             <select
               className="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-slate-100 rounded-xl text-xs font-semibold outline-none cursor-pointer"
               value={categoryFilter}
@@ -207,7 +209,7 @@ export default function TransactionsView({
                 setPage(1);
               }}
             >
-              <option value="all" className="bg-slate-900 text-slate-300">All Category Tags</option>
+              <option value="all" className="bg-slate-900 text-slate-300">{t('allCategoryTags')}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id} className="bg-slate-900 text-slate-300">{c.name}</option>
               ))}
@@ -215,7 +217,7 @@ export default function TransactionsView({
           </div>
 
           <div>
-            <label className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Temporal Window</label>
+            <label className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">{t('temporalWindow')}</label>
             <select
               className="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-slate-100 rounded-xl text-xs font-semibold outline-none cursor-pointer"
               value={periodFilter}
@@ -224,25 +226,25 @@ export default function TransactionsView({
                 setPage(1);
               }}
             >
-              <option value="all" className="bg-slate-900 text-slate-300">Historic Span: All</option>
-              <option value="today" className="bg-slate-900 text-slate-300">Today Only</option>
-              <option value="this-week" className="bg-slate-900 text-slate-300">Past 7 Days</option>
-              <option value="this-month" className="bg-slate-900 text-slate-300">This Month</option>
+              <option value="all" className="bg-slate-900 text-slate-300">{t('historicSpanAll')}</option>
+              <option value="today" className="bg-slate-900 text-slate-300">{t('historicSpanToday')}</option>
+              <option value="this-week" className="bg-slate-900 text-slate-300">{t('historicSpanWeek')}</option>
+              <option value="this-month" className="bg-slate-900 text-slate-300">{t('historicSpanMonth')}</option>
               <option value="past-30" className="bg-slate-900 text-slate-300">Past 30 Days</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Sort Priority</label>
+            <label className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">{t('sortPriority')}</label>
             <select
               className="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-slate-100 rounded-xl text-xs font-semibold outline-none cursor-pointer"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
             >
-              <option value="date-desc" className="bg-slate-900 text-slate-300">Newest First</option>
-              <option value="date-asc" className="bg-slate-900 text-slate-300">Oldest First</option>
-              <option value="amount-desc" className="bg-slate-900 text-slate-300">Highest Amount</option>
-              <option value="amount-asc" className="bg-slate-900 text-slate-300">Lowest Amount</option>
+              <option value="date-desc" className="bg-slate-900 text-slate-300">{t('newestFirst')}</option>
+              <option value="date-asc" className="bg-slate-900 text-slate-300">{t('oldestFirst')}</option>
+              <option value="amount-desc" className="bg-slate-900 text-slate-300">{t('highestValue')}</option>
+              <option value="amount-asc" className="bg-slate-900 text-slate-300">{t('lowestValue')}</option>
             </select>
           </div>
         </div>
@@ -272,12 +274,12 @@ export default function TransactionsView({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-850/60 border-b border-slate-800 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  <th className="py-4.5 px-6">Source Note & Memo</th>
-                  <th className="py-4.5 px-4 text-center">Type</th>
-                  <th className="py-4.5 px-4">Category Tag</th>
-                  <th className="py-4.5 px-4 font-display">Date</th>
-                  <th className="py-4.5 px-4 text-right">Ledger Value</th>
-                  <th className="py-4.5 px-6 text-center">Controls</th>
+                  <th className="py-4.5 px-6">{t('sourceNoteMemo')}</th>
+                  <th className="py-4.5 px-4 text-center">{t('type')}</th>
+                  <th className="py-4.5 px-4">{t('categoryTag')}</th>
+                  <th className="py-4.5 px-4 font-display">{t('date')}</th>
+                  <th className="py-4.5 px-4 text-right">{t('ledgerValue')}</th>
+                  <th className="py-4.5 px-6 text-center">{t('controls')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">

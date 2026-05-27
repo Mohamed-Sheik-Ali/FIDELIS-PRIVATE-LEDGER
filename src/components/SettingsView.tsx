@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import { Shield, Key, RefreshCw, LogOut, Check, Save, User as UserIcon, Bell, CreditCard, Sparkles } from 'lucide-react';
+import { useLanguage } from '../services/languageService';
 
 interface SettingsViewProps {
   user: User;
@@ -20,6 +21,7 @@ export default function SettingsView({
   onLogout,
   onResetDatabase,
 }: SettingsViewProps) {
+  const { t, language, setLanguage } = useLanguage();
   const [name, setName] = useState<string>(user.name);
   const [email, setEmail] = useState<string>(user.email);
   const [showSavedMsg, setShowSavedMsg] = useState<boolean>(false);
@@ -53,7 +55,7 @@ export default function SettingsView({
       {/* Page Title */}
       <div>
         <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">
-          System Preferences
+          {t('settings')}
         </h1>
         <p className="text-sm text-slate-550 dark:text-slate-400">
           Calibrate secure profile variables, limits, and developer debug states
@@ -69,7 +71,7 @@ export default function SettingsView({
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-7 shadow-xs">
             <h3 className="text-base font-display font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <UserIcon size={18} className="text-emerald-500" />
-              <span>Personal Identity Profile</span>
+              <span>{t('personalIdentityProfile')}</span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Configure names and communication channels
@@ -79,7 +81,7 @@ export default function SettingsView({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-450 dark:text-slate-400 block mb-1.5">
-                    First Name & Pseudonym
+                    {t('editProfileName')}
                   </label>
                   <input
                     type="text"
@@ -91,7 +93,7 @@ export default function SettingsView({
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-450 dark:text-slate-400 block mb-1.5">
-                    Email address
+                    {t('editProfileEmail')}
                   </label>
                   <input
                     type="email"
@@ -117,10 +119,46 @@ export default function SettingsView({
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/10"
                 >
                   <Save size={14} />
-                  <span>Update Profile</span>
+                  <span>{t('saveVaultCredentials')}</span>
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* APPLICATION LANGUAGE SETTING */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-7 shadow-xs">
+            <h3 className="text-base font-display font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Sparkles size={18} className="text-emerald-500" />
+              <span>{t('appLanguageTitle')}</span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {t('appLanguageDesc')}
+            </p>
+
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              {[
+                { code: 'en', label: 'English', native: 'English' },
+                { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
+                { code: 'te', label: 'Telugu', native: 'తెలుగు' }
+              ].map((lang) => {
+                const isActive = language === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => setLanguage(lang.code as any)}
+                    className={`p-3.5 rounded-2xl flex flex-col items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 font-extrabold shadow-md shadow-emerald-500/5'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 font-medium'
+                    }`}
+                  >
+                    <span className="text-sm font-bold leading-none">{lang.native}</span>
+                    <span className="text-[9px] opacity-60 font-semibold tracking-wider uppercase">{lang.code}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* SECURITY & DELEGATION CONTROLS */}

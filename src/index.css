@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/* Premium minimalist custom scrollbars for secure UI consistency */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 9999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 211, 153, 0.3);
+}
+
+/* Ensure body doesn't bounce around on lock screens */
+body {
+  overscroll-behavior-y: contain;
+}

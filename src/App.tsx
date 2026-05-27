@@ -24,11 +24,13 @@ import TransactionModal from './components/TransactionModal';
 import CategoryModal from './components/CategoryModal';
 import ThemeToggle from './components/ThemeToggle';
 import LucideIcon from './components/LucideIcon';
+import { useLanguage } from './services/languageService';
 
 // Standard Lucide icons supporting structural navigation
 import { LayoutDashboard, Compass, Settings, LogOut, Bell, Plus, Check, Info, AlertTriangle, Menu, X, ArrowUpRight, ArrowDownLeft, Plane, Coins } from 'lucide-react';
 
 export default function App() {
+  const { t, language, setLanguage } = useLanguage();
   // Authentication & Session state
   const [user, setUser] = useState<User | null>(null);
 
@@ -457,7 +459,7 @@ export default function App() {
                 FIDELIS
               </p>
               <p className="text-[10px] uppercase font-bold text-slate-450 dark:text-slate-400 tracking-wider">
-                Private Ledger
+                {t('privateLedger')}
               </p>
             </div>
           </div>
@@ -465,12 +467,12 @@ export default function App() {
           {/* Navigation Links Grid */}
           <nav className="space-y-1.5">
             {[
-              { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-              { id: 'transactions', label: 'Transactions', icon: Compass },
-              { id: 'trips', label: 'Trip Planner', icon: Plane },
-              { id: 'currency', label: 'Currencies', icon: Coins },
-              { id: 'categories', label: 'Categories', icon: LucideIcon, special: 'Tag' },
-              { id: 'settings', label: 'Settings', icon: Settings },
+              { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+              { id: 'transactions', label: t('transactions'), icon: Compass },
+              { id: 'trips', label: t('trips'), icon: Plane },
+              { id: 'currency', label: t('currencies'), icon: Coins },
+              { id: 'categories', label: t('categories'), icon: LucideIcon, special: 'Tag' },
+              { id: 'settings', label: t('settings'), icon: Settings },
             ].map((tab) => {
               const IconComp = tab.special ? () => <LucideIcon name={tab.special!} size={18} /> : tab.icon;
               const isActive = activeTab === tab.id;
@@ -509,7 +511,7 @@ export default function App() {
                   {user.name}
                 </p>
                 <p className="text-[9px] text-slate-400 truncate mt-0.5">
-                  Secure access
+                  {t('secureAccess')}
                 </p>
               </div>
             </div>
@@ -517,7 +519,7 @@ export default function App() {
             <button
               onClick={handleLogout}
               className="p-1.5 hover:bg-slate-250/50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors cursor-pointer"
-              title="Lock Vault"
+              title={t('lockVault')}
             >
               <LogOut size={14} />
             </button>
@@ -541,6 +543,15 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as any)}
+            className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer outline-none focus:border-emerald-500"
+          >
+            <option value="en">EN</option>
+            <option value="ta">தமிழ்</option>
+            <option value="te">తెలుగు</option>
+          </select>
           <ThemeToggle />
           
           <button
@@ -558,12 +569,12 @@ export default function App() {
         <div className="md:hidden fixed inset-0 top-[65px] z-25 bg-white dark:bg-slate-950/95 backdrop-blur-sm p-6 flex flex-col justify-between">
           <nav className="space-y-2">
             {[
-              { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-              { id: 'transactions', label: 'Transactions', icon: Compass },
-              { id: 'trips', label: 'Trip Planner', icon: Plane },
-              { id: 'currency', label: 'Currencies', icon: Coins },
-              { id: 'categories', label: 'Categories', icon: LucideIcon, special: 'Tag' },
-              { id: 'settings', label: 'Settings', icon: Settings },
+              { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+              { id: 'transactions', label: t('transactions'), icon: Compass },
+              { id: 'trips', label: t('trips'), icon: Plane },
+              { id: 'currency', label: t('currencies'), icon: Coins },
+              { id: 'categories', label: t('categories'), icon: LucideIcon, special: 'Tag' },
+              { id: 'settings', label: t('settings'), icon: Settings },
             ].map((tab) => {
               const IconComp = tab.special ? () => <LucideIcon name={tab.special!} size={16} /> : tab.icon;
               const isActive = activeTab === tab.id;
@@ -595,7 +606,7 @@ export default function App() {
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-800 dark:text-white">{user.name}</p>
-                <p className="text-xs text-slate-450 dark:text-slate-400 mt-0.5">Secure Sandbox</p>
+                <p className="text-xs text-slate-450 dark:text-slate-400 mt-0.5">{t('secureSandbox')}</p>
               </div>
             </div>
             <button
@@ -606,7 +617,7 @@ export default function App() {
               className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-xl flex items-center gap-1.5"
             >
               <LogOut size={14} />
-              <span>Lock Vault</span>
+              <span>{t('lockVault')}</span>
             </button>
           </div>
         </div>
@@ -617,6 +628,16 @@ export default function App() {
         
         {/* UPPER DESKTOP STATS BAR CONTROLS */}
         <div className="hidden md:flex justify-end items-center gap-3.5 mb-8 pb-5 border-b border-slate-100 dark:border-slate-800">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as any)}
+            className="bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 text-slate-700 dark:text-slate-350 px-2.5 py-1.5 rounded-xl text-xs font-semibold outline-hidden cursor-pointer hover:border-emerald-500 transition-all shadow-xs"
+          >
+            <option value="en">English (EN)</option>
+            <option value="ta">தமிழ் (TA)</option>
+            <option value="te">తెలుగు (TE)</option>
+          </select>
+
           <ThemeToggle />
           
           <div className="p-2.2 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 text-slate-550 rounded-xl relative cursor-pointer" title="Alert logs">
@@ -626,7 +647,7 @@ export default function App() {
 
           <div className="flex items-center gap-2.5 px-4.5 py-2.2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-xs font-semibold">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-slate-550 dark:text-slate-400 font-medium">Vault Synchronized</span>
+            <span className="text-slate-550 dark:text-slate-400 font-medium">{t('vaultSynchronized')}</span>
           </div>
         </div>
 
@@ -709,7 +730,7 @@ export default function App() {
           }`}
         >
           <LayoutDashboard size={18} className={activeTab === 'dashboard' ? 'scale-110 transition-transform' : ''} />
-          <span className="text-[9px] font-bold uppercase tracking-wider">Home</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider">{t('home')}</span>
         </button>
 
         {/* Transactions Ledger tab */}
@@ -723,13 +744,13 @@ export default function App() {
           }`}
         >
           <Compass size={18} className={activeTab === 'transactions' ? 'scale-110 transition-transform' : ''} />
-          <span className="text-[9px] font-bold uppercase tracking-wider">Ledger</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider">{t('ledger')}</span>
         </button>
 
         {/* Floating Quick Action Button (+) */}
         <button
           onClick={handleOpenAddTx}
-          className="w-12 h-12 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-emerald-555 transform -translate-y-3 shrink-0 cursor-pointer active:scale-95 transition-all animate-bounce"
+          className="w-12 h-12 bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black shadow-lg shadow-emerald-555 transform -translate-y-3 shrink-0 cursor-pointer active:scale-95 transition-all"
           title="Floating Ledger Add"
         >
           <Plus size={22} className="stroke-[3]" />
@@ -746,7 +767,7 @@ export default function App() {
           }`}
         >
           <LucideIcon name="Tag" size={18} className={activeTab === 'categories' ? 'scale-110 transition-transform text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} />
-          <span className="text-[9px] font-bold uppercase tracking-wider">Tags</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider">{t('tags')}</span>
         </button>
 
         {/* Settings/Profile Preferences tab */}
@@ -760,7 +781,7 @@ export default function App() {
           }`}
         >
           <Settings size={18} className={activeTab === 'settings' ? 'scale-110 transition-transform' : ''} />
-          <span className="text-[9px] font-bold uppercase tracking-wider">Settings</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider">{t('settings')}</span>
         </button>
 
       </nav>

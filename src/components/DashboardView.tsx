@@ -8,6 +8,7 @@ import { Transaction, Category, ViewType } from '../types';
 import LucideIcon from './LucideIcon';
 import { convertCurrency, formatCurrencyValue } from '../services/currencyService';
 import { Plus, ArrowUpRight, ArrowDownLeft, TrendingUp, Wallet, ArrowRight, Activity, Calendar } from 'lucide-react';
+import { useLanguage } from '../services/languageService';
 
 interface DashboardViewProps {
   transactions: Transaction[];
@@ -26,6 +27,7 @@ export default function DashboardView({
   userName,
   baseCurrency = 'USD',
 }: DashboardViewProps) {
+  const { t } = useLanguage();
   const [activeDonutIdx, setActiveDonutIdx] = useState<number | null>(null);
 
   // Convert and add up totals under the designated portfolio Base Currency
@@ -113,8 +115,8 @@ export default function DashboardView({
       {/* Greetings Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-900 dark:text-white leading-tight">
-            Welcome back, <span className="text-emerald-600 dark:text-emerald-400">{userName}</span>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-slate-905 dark:text-white leading-tight">
+            {t('welcomeBack')} <span className="text-emerald-600 dark:text-emerald-400">{userName}</span>
           </h1>
           <p className="text-sm text-slate-550 dark:text-slate-400 mt-0.5">
             Your personal treasury is healthy. Here is your overview for this month.
@@ -126,7 +128,7 @@ export default function DashboardView({
           className="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-2xl shadow-lg shadow-emerald-600/20 active:scale-97 transition-all w-full md:w-auto cursor-pointer"
         >
           <Plus size={18} />
-          <span>Add Transaction</span>
+          <span>{t('transactionModalTitleAdd')}</span>
         </button>
       </div>
 
@@ -138,7 +140,7 @@ export default function DashboardView({
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Net Net Assets
+              {t('currentNetAssetsTitle')}
             </span>
             <span className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
               <Wallet size={18} />
@@ -150,7 +152,7 @@ export default function DashboardView({
             </h3>
             <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-2">
               <TrendingUp size={14} className="text-emerald-400" />
-              <span className="text-emerald-400 font-medium">Safe to spend</span> liquid reserves
+              <span className="text-emerald-400 font-medium">{t('safeToSpend')}</span>
             </p>
           </div>
           {/* Sparkline decoration */}
@@ -165,7 +167,7 @@ export default function DashboardView({
         <div className="rounded-3xl bg-slate-900 border border-slate-800/80 p-6 md:p-7 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Total Inflow
+              {t('totalInflow')}
             </span>
             <span className="p-2 bg-emerald-950/30 text-emerald-400 rounded-xl">
               <ArrowUpRight size={18} />
@@ -191,7 +193,7 @@ export default function DashboardView({
         <div className="rounded-3xl bg-slate-900 border border-slate-800/80 p-6 md:p-7 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Total Outflow
+              {t('totalOutflow')}
             </span>
             <span className="p-2 bg-rose-950/30 text-rose-400 rounded-xl">
               <ArrowDownLeft size={18} />
@@ -202,7 +204,7 @@ export default function DashboardView({
               {formatCurrencyValue(totalExpense, baseCurrency)}
             </h3>
             <p className="text-xs text-slate-400 mt-2 flex items-center gap-1">
-              Distributed across <span className="font-semibold">{categorySlices.length} categories</span>
+              {t('distributedCount', { count: categorySlices.length })}
             </p>
           </div>
           {/* Static red sparkline */}
@@ -221,10 +223,10 @@ export default function DashboardView({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-display font-bold text-white">
-                Outflow Structuring
+                {t('assetAllocation')}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Visual breakdown of where your cash went (converted to {baseCurrency})
+                {t('assetAllocationDesc')}
               </p>
             </div>
             <span className="text-[10px] font-bold px-2.5 py-1.5 bg-slate-850 text-slate-450 rounded-lg uppercase tracking-wider border border-slate-800">
@@ -333,17 +335,17 @@ export default function DashboardView({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-display font-bold text-white">
-              Recent Transactions
+              {t('recentTransactions')}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Your latest financial movements
+              {t('recentTransactionsDesc')}
             </p>
           </div>
           <button
             onClick={() => onNavigate('transactions')}
             className="px-4 py-2 bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1 border border-slate-700 cursor-pointer"
           >
-            <span>View All Ledger</span>
+            <span>{t('viewLiveLedgerLogs')}</span>
             <ArrowRight size={14} />
           </button>
         </div>
