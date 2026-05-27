@@ -28,6 +28,7 @@ import { useLanguage } from './services/languageService';
 
 // Standard Lucide icons supporting structural navigation
 import { LayoutDashboard, Compass, Settings, LogOut, Bell, Plus, Check, Info, AlertTriangle, Menu, X, ArrowUpRight, ArrowDownLeft, Plane, Coins } from 'lucide-react';
+import fidelisLogo from './assets/images/fidelis_logo_1779728166630.png';
 
 export default function App() {
   const { t, language, setLanguage } = useLanguage();
@@ -417,7 +418,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row font-sans transition-colors">
+    <div className="h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row font-sans transition-colors">
       
       {/* Dynamic Floating Toast Alerts */}
       {toast && (
@@ -444,14 +445,13 @@ export default function App() {
       )}
 
       {/* DESKTOP & TABLET SIDEBAR */}
-      <aside className="hidden md:flex flex-col justify-between w-64 lg:w-72 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 p-6 shadow-xs select-none relative z-10">
+      <aside className="hidden md:flex flex-col justify-between w-64 lg:w-72 shrink-0 h-full overflow-y-auto bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 p-6 shadow-xs select-none relative z-10">
         <div className="space-y-8">
           {/* Logo Identity */}
           <div className="flex items-center gap-3">
             <img
-              src="/src/assets/images/fidelis_logo_1779728166630.png"
+              src={fidelisLogo}
               alt="FIDELIS Logo"
-              referrerPolicy="no-referrer"
               className="w-10 h-10 rounded-xl object-cover border border-emerald-500/20 shadow-lg shadow-emerald-500/5"
             />
             <div>
@@ -532,9 +532,8 @@ export default function App() {
       <header className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-4 sticky top-0 z-30 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <img
-            src="/src/assets/images/fidelis_logo_1779728166630.png"
+            src={fidelisLogo}
             alt="FIDELIS Logo"
-            referrerPolicy="no-referrer"
             className="w-8 h-8 rounded-lg object-cover border border-emerald-500/20"
           />
           <span className="font-display font-bold text-slate-900 dark:text-white text-base tracking-tight leading-none">

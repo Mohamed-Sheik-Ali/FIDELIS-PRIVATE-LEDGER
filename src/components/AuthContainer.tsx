@@ -8,6 +8,7 @@ import { AuthView, User } from '../types';
 import { Mail, Lock, User as UserIcon, ArrowRight, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { auth, db } from '../services/firebase';
+import fidelisLogo from '../assets/images/fidelis_logo_1779728166630.png';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -184,9 +185,8 @@ export default function AuthContainer({ onAuthenticate }: AuthContainerProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img
-              src="/src/assets/images/fidelis_logo_1779728166630.png"
+              src={fidelisLogo}
               alt="FIDELIS Logo"
-              referrerPolicy="no-referrer"
               className="w-10 h-10 rounded-xl object-cover border border-emerald-500/20 shadow-lg shadow-emerald-500/5"
             />
             <div>
